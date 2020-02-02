@@ -2,12 +2,7 @@ License of source code:
 -----------------------
 2012 Based on Echo's compass mod https://forum.minetest.net/viewtopic.php?f=11&t=3785 (2012 / WFTPL)
 2017 Forked, enhanced and relicensed to MIT by bell07
-
-License of media:
------------------
-Textures: CC BY-SA by tacotexmex
-Sound: CC0 by tacotexmex
-
+2020 Forked, changed from ccompass to death_compass by FaceDeer
 
 
 MIT License
