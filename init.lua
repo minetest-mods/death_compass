@@ -5,6 +5,7 @@ local S = minetest.get_translator("death_compass")
  
  -- how many seconds does the death compass work for? 0 for indefinite
 local duration = tonumber(minetest.settings:get("death_compass_duration")) or 0
+local automatic = minetest.settings:get_bool("death_compass_automatic", false)
 
 local range_to_inactivate = 5
 
@@ -43,8 +44,15 @@ end
 -- get right image number for players compass
 local function get_compass_stack(player, stack)
 	local target = get_destination(player, stack)
+	local inactive_return
+	if automatic then
+		inactive_return = ItemStack("")
+	else
+		inactive_return = ItemStack("death_compass:inactive")
+	end	
+	
 	if not target then
-		return ItemStack("death_compass:inactive")
+		return inactive_return
 	end
 	local pos = player:get_pos()
 	local dist = vector.distance(pos, target)
@@ -53,7 +61,7 @@ local function get_compass_stack(player, stack)
 	if dist < range_to_inactivate then
 		stop_ticking(player_name)
 		minetest.sound_play("death_compass_bone_crunch", {to_player=player_name, gain = 1.0})
-		return ItemStack("death_compass:inactive")	
+		return inactive_return
 	end
 	
 	local dir = player:get_look_horizontal()
@@ -74,7 +82,7 @@ local function get_compass_stack(player, stack)
 		if remaining < 0 then
 			stop_ticking(player_name)
 			minetest.sound_play("death_compass_bone_crunch", {to_player=player_name, gain = 1.0})
-			return ItemStack("death_compass:inactive")
+			return inactive_return
 		end
 		start_ticking(player_name)
 		meta_fields.description = S("@1m to @2's corpse, @3s remaining",
@@ -124,22 +132,25 @@ for i = 0, 15 do
 		groups = groups,
 	})
 end
-minetest.register_tool("death_compass:inactive", {
-	description = S("Inactive Death Compass"),
-	inventory_image = "death_compass_inactive.png",
-	wield_image = "death_compass_inactive.png",
-	stack_max = 1,
-	groups = {death_compass = 1},
-})
 
-minetest.register_craft({
-	output = 'death_compass:inactive',
-	recipe = {
-		{'', 'bones:bones', ''},
-		{'bones:bones', 'default:mese_crystal_fragment', 'bones:bones'},
-		{'', 'bones:bones', ''}
-	}
-})
+if not automatic then
+	minetest.register_tool("death_compass:inactive", {
+		description = S("Inactive Death Compass"),
+		inventory_image = "death_compass_inactive.png",
+		wield_image = "death_compass_inactive.png",
+		stack_max = 1,
+		groups = {death_compass = 1},
+	})
+
+	minetest.register_craft({
+		output = 'death_compass:inactive',
+		recipe = {
+			{'', 'bones:bones', ''},
+			{'bones:bones', 'default:mese_crystal_fragment', 'bones:bones'},
+			{'', 'bones:bones', ''}
+		}
+	})
+end
 
 local player_death_location = {}
 minetest.register_on_dieplayer(function(player, reason)
@@ -147,10 +158,14 @@ minetest.register_on_dieplayer(function(player, reason)
 	local inv = minetest.get_inventory({type="player", name=player:get_player_name()})
 	local list = inv:get_list("main")
 	local count = 0
-	for i, itemstack in pairs(list) do
-		if minetest.get_item_group(itemstack:get_name(), "death_compass") > 0 then
-			count = count + itemstack:get_count()
-			list[i] = ItemStack("")
+	if automatic then
+		count = 1
+	else
+		for i, itemstack in pairs(list) do
+			if minetest.get_item_group(itemstack:get_name(), "death_compass") > 0 then
+				count = count + itemstack:get_count()
+				list[i] = ItemStack("")
+			end
 		end
 	end
 	if count > 0 then
