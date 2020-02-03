@@ -9,16 +9,61 @@ local automatic = minetest.settings:get_bool("death_compass_automatic", false)
 
 local range_to_inactivate = 5
 
-local documentation = S("This does nothing in its current inert form. If you have this in your inventory when you die, however, it will follow you into your next life's inventory and point toward the location of your previous life's end.")
+-- If round is true the return string will only have the two largest-scale values
+local function clock_string(seconds, round)
+	seconds = math.floor(seconds)
+	local days = math.floor(seconds/86400)
+	seconds = seconds - days*86400
+	local hours = math.floor(seconds/3600)
+	seconds = seconds - hours*3600
+	local minutes = math.floor(seconds/60)
+	seconds = seconds - minutes*60
+
+	local ret = {}
+	if days == 1 then
+		table.insert(ret, S("1 day"))
+	elseif days > 1 then
+		table.insert(ret, S("@1 days", days))
+	end
+	if hours == 1 then
+		table.insert(ret, S("1 hour"))
+	elseif hours > 1 then
+		table.insert(ret, S("@1 hours", hours))
+	end
+	if minutes == 1 then
+		table.insert(ret, S("1 minute"))
+	elseif minutes > 1 then
+		table.insert(ret, S("@1 minutes", minutes))
+	end
+	if seconds == 1 then
+		table.insert(ret, S("1 second"))
+	elseif seconds > 1 then
+		table.insert(ret, S("@1 seconds", seconds))
+	end
+	
+	if #ret == 0 then
+		return S("@1 seconds", 0)
+	end
+	if #ret == 1 then
+		return ret[1]
+	end
+	if round or #ret == 2 then
+		return S("@1 and @2", ret[1], ret[2])
+	end
+	
+	return table.concat(ret, S(", "))
+end
+
+local documentation = S("This does nothing in its current inert state. If you have this in your inventory when you die, however, it will follow you into your next life's inventory and point toward the location of your previous life's end.")
 local durationdesc
 if duration > 0 then
-	durationdesc = S("The Death Compass' guidance will only last for @1 seconds.", duration)
+	durationdesc = S("The Death Compass' guidance will only last for @1 after death.", clock_string(duration, false))
 else
-	durationdesc = S("The Death Compass will point toward your previous corpse until you find it.")
+	durationdesc = S("The Death Compass will point toward your corpse until you find it.")
 end
 
 -- set a position to the compass stack
-function set_target(stack, pos, name)
+local function set_target(stack, pos, name)
 	local meta=stack:get_meta()
 	meta:set_string("target_pos", minetest.pos_to_string(pos))
 	meta:set_string("target_corpse", name)
@@ -93,11 +138,11 @@ local function get_compass_stack(player, stack)
 			return inactive_return
 		end
 		start_ticking(player_name)
-		meta_fields.description = S("@1m to @2's corpse, @3s remaining",
-			math.floor(dist), meta_fields.target_corpse, remaining)
+		meta_fields.description = S("@1m to @2's corpse, @3 remaining",
+			math.floor(dist), meta_fields.target_corpse, clock_string(remaining, true))
 	else
-		meta_fields.description = S("@1m to @2's corpse, died @3s ago",
-			math.floor(dist), meta_fields.target_corpse, minetest.get_gametime() - time_of_death)
+		meta_fields.description = S("@1m to @2's corpse, died @3 ago",
+			math.floor(dist), meta_fields.target_corpse, clock_string(minetest.get_gametime() - time_of_death, true))
 	end
 	
 	local newstack = ItemStack("death_compass:dir"..compass_image)
@@ -131,13 +176,12 @@ end)
 -- register items
 for i = 0, 15 do
 	local image = "death_compass_16_"..i..".png"
-	local groups = {death_compass = 1, not_in_creative_inventory = 1}
 	minetest.register_craftitem("death_compass:dir"..i, {
 		description = S("Death Compass"),
 		inventory_image = image,
 		wield_image = image,
 		stack_max = 1,
-		groups = groups,
+		groups = {death_compass = 1, not_in_creative_inventory = 1},
 	})
 end
 
@@ -154,7 +198,6 @@ if not automatic then
 		inventory_image = "death_compass_inactive.png",
 		wield_image = "death_compass_inactive.png",
 		stack_max = 1,
-		groups = {death_compass = 1},
         on_place = display_doc,
         on_secondary_use = display_doc,
 	})
@@ -167,6 +210,16 @@ if not automatic then
 			{'', 'bones:bones', ''}
 		}
 	})
+	
+	-- Allow a player to deliberately deactivate a death compass
+	minetest.register_craft({
+		output = 'death_compass:inactive',
+        type = "shapeless",
+        recipe = {
+            'group:death_compass',
+		}
+	})
+
 end
 
 local player_death_location = {}
@@ -179,7 +232,7 @@ minetest.register_on_dieplayer(function(player, reason)
 		count = 1
 	else
 		for i, itemstack in pairs(list) do
-			if minetest.get_item_group(itemstack:get_name(), "death_compass") > 0 then
+			if itemstack:get_name() == "death_compass:inactive" then
 				count = count + itemstack:get_count()
 				list[i] = ItemStack("")
 			end
@@ -203,7 +256,7 @@ minetest.register_on_respawnplayer(function(player)
 		-- Remove any death compasses they might still have for some reason
 		local current = inv:get_list("main")
 		for i, item in pairs(current) do
-			if minetest.get_item_group(item:get_name(), "death_compass") > 0 then
+			if item:get_name() == "death_compass:inactive" then
 				current[i] = ItemStack("")
 			end
 		end
