@@ -1,0 +1,47 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-02-02 17:50-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: death_compass\init.lua:12
+msgid ""
+"This does nothing in its current inert form. If you have this in your "
+"inventory when you die, however, it will follow you into your next life's "
+"inventory and point toward the location of your previous life's end."
+msgstr ""
+
+#: death_compass\init.lua:15
+msgid "The Death Compass' guidance will only last for @1 seconds."
+msgstr ""
+
+#: death_compass\init.lua:17
+msgid ""
+"The Death Compass will point toward your previous corpse until you find it."
+msgstr ""
+
+#: death_compass\init.lua:96
+msgid "@1m to @2's corpse, @3s remaining"
+msgstr ""
+
+#: death_compass\init.lua:99
+msgid "@1m to @2's corpse, died @3s ago"
+msgstr ""
+
+#: death_compass\init.lua:136
+#: death_compass\init.lua:151
+msgid "Death Compass"
+msgstr ""

@@ -9,6 +9,14 @@ local automatic = minetest.settings:get_bool("death_compass_automatic", false)
 
 local range_to_inactivate = 5
 
+local documentation = S("This does nothing in its current inert form. If you have this in your inventory when you die, however, it will follow you into your next life's inventory and point toward the location of your previous life's end.")
+local durationdesc
+if duration > 0 then
+	durationdesc = S("The Death Compass' guidance will only last for @1 seconds.", duration)
+else
+	durationdesc = S("The Death Compass will point toward your previous corpse until you find it.")
+end
+
 -- set a position to the compass stack
 function set_target(stack, pos, name)
 	local meta=stack:get_meta()
@@ -124,7 +132,7 @@ end)
 for i = 0, 15 do
 	local image = "death_compass_16_"..i..".png"
 	local groups = {death_compass = 1, not_in_creative_inventory = 1}
-	minetest.register_tool("death_compass:dir"..i, {
+	minetest.register_craftitem("death_compass:dir"..i, {
 		description = S("Death Compass"),
 		inventory_image = image,
 		wield_image = image,
@@ -134,12 +142,21 @@ for i = 0, 15 do
 end
 
 if not automatic then
-	minetest.register_tool("death_compass:inactive", {
-		description = S("Inactive Death Compass"),
+	local display_doc = function(itemstack, user)
+		local player_name = user:get_player_name()
+		minetest.chat_send_player(player_name, documentation .. "\n" .. durationdesc)
+	end
+
+	minetest.register_craftitem("death_compass:inactive", {
+		description = S("Death Compass"),
+		_doc_items_longdesc = documentation,
+		_doc_items_usagehelp = durationdesc,
 		inventory_image = "death_compass_inactive.png",
 		wield_image = "death_compass_inactive.png",
 		stack_max = 1,
 		groups = {death_compass = 1},
+        on_place = display_doc,
+        on_secondary_use = display_doc,
 	})
 
 	minetest.register_craft({
