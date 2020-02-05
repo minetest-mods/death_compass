@@ -9,6 +9,12 @@ local automatic = minetest.settings:get_bool("death_compass_automatic", false)
 
 local range_to_inactivate = 5
 
+local hud_position = {
+	x= tonumber(minetest.settings:get("death_compass_hud_x")) or 0.5,
+	y= tonumber(minetest.settings:get("death_compass_hud_y")) or 0.9,
+}
+local hud_color = tonumber("0x" .. (minetest.settings:get("death_compass_hud_color") or "FFFF00")) or 0xFFFF00
+
 -- If round is true the return string will only have the two largest-scale values
 local function clock_string(seconds, round)
 	seconds = math.floor(seconds)
@@ -94,6 +100,55 @@ local function stop_ticking(player_name)
 	end
 end
 
+local player_huds = {}
+local function hide_hud(player, player_name)
+	local id = player_huds[player_name]
+	if id then
+		player:hud_remove(id)
+		player_huds[player_name] = nil
+	end
+end
+local function update_hud(player, player_name, compass)
+	local metadata = compass:get_meta()
+
+	local target_pos = minetest.string_to_pos(metadata:get_string("target_pos"))
+	local player_pos = player:get_pos()
+	local distance = vector.distance(player_pos, target_pos)
+	if not target_pos then
+		return
+	end
+
+	local time_of_death = metadata:get_int("time_of_death")
+	local target_name = metadata:get_string("target_corpse")
+
+	local description
+	if duration > 0 then
+		local remaining = time_of_death + duration - minetest.get_gametime()
+		if remaining < 0 then
+			return
+		end
+		description = S("@1m to @2's corpse, @3 remaining", math.floor(distance),
+			target_name, clock_string(remaining, true))
+	else
+		description = S("@1m to @2's corpse, died @3 ago", math.floor(distance),
+			target_name, clock_string(minetest.get_gametime() - time_of_death, true))
+	end
+
+	local id = player_huds[player_name]
+	if not id then
+		id = player:hud_add({
+			hud_elem_type = "text",
+			position = hud_position,
+			text = description,
+			number = hud_color,
+			scale = 20,
+		})
+		player_huds[player_name] = id
+	else
+		player:hud_change(id, "text", description)
+	end
+end
+
 -- get right image number for players compass
 local function get_compass_stack(player, stack)
 	local target = get_destination(player, stack)
@@ -108,10 +163,10 @@ local function get_compass_stack(player, stack)
 		return inactive_return
 	end
 	local pos = player:get_pos()
-	local dist = vector.distance(pos, target)
+	local distance = vector.distance(pos, target)
 	local player_name = player:get_player_name()
 	
-	if dist < range_to_inactivate then
+	if distance < range_to_inactivate then
 		stop_ticking(player_name)
 		minetest.sound_play("death_compass_bone_crunch", {to_player=player_name, gain = 1.0})
 		return inactive_return
@@ -130,6 +185,7 @@ local function get_compass_stack(player, stack)
 	local metadata = stack:get_meta():to_table()
 	local meta_fields = metadata.fields
 	local time_of_death = tonumber(meta_fields.time_of_death)
+
 	if duration > 0 then
 		local remaining = time_of_death + duration - minetest.get_gametime()
 		if remaining < 0 then
@@ -138,13 +194,8 @@ local function get_compass_stack(player, stack)
 			return inactive_return
 		end
 		start_ticking(player_name)
-		meta_fields.description = S("@1m to @2's corpse, @3 remaining",
-			math.floor(dist), meta_fields.target_corpse, clock_string(remaining, true))
-	else
-		meta_fields.description = S("@1m to @2's corpse, died @3 ago",
-			math.floor(dist), meta_fields.target_corpse, clock_string(minetest.get_gametime() - time_of_death, true))
 	end
-	
+
 	local newstack = ItemStack("death_compass:dir"..compass_image)
 	if metadata then
 		newstack:get_meta():from_table(metadata)
@@ -152,23 +203,34 @@ local function get_compass_stack(player, stack)
 	return newstack
 end
 
--- update inventory
+-- update inventory and hud
 minetest.register_globalstep(function(dtime)
-	for i,player in ipairs(minetest.get_connected_players()) do
+	for i, player in ipairs(minetest.get_connected_players()) do
 		local player_name = player:get_player_name()
-		if player:get_inventory() then
-			for i,stack in ipairs(player:get_inventory():get_list("main")) do
+		local compass_in_quickbar
+		local inv = player:get_inventory()
+		if inv then
+			for i, stack in ipairs(inv:get_list("main")) do
 				if i > 8 then
 					break
 				end
 				if string.sub(stack:get_name(), 0, 17) == "death_compass:dir" then
 					player:get_inventory():set_stack("main", i, get_compass_stack(player, stack))
-					player_name = nil -- don't stop the sound playing
+					compass_in_quickbar = true
+				end
+			end
+			if compass_in_quickbar then
+				local wielded = player:get_wielded_item()
+				if string.sub(wielded:get_name(), 0, 17) == "death_compass:dir" then
+					update_hud(player, player_name, wielded)
+				else
+					hide_hud(player, player_name)
 				end
 			end
 		end
-		if player_name then
+		if not compass_in_quickbar then
 			stop_ticking(player_name)
+			hide_hud(player, player_name)
 		end
 	end
 end)
