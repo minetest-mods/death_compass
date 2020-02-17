@@ -336,3 +336,7 @@ end)
 --    * Called when player is to be respawned
 --    * Called _before_ repositioning of player occurs
 --    * return true in func to disable regular player placement
+
+minetest.register_on_leaveplayer(function(player, timed_out)
+	hide_hud(player, player:get_player_name())
+end)

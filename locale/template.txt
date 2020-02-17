@@ -1,0 +1,16 @@
+, =
+1 day=
+1 hour=
+1 minute=
+1 second=
+@1 and @2=
+@1 days=
+@1 hours=
+@1 minutes=
+@1 seconds=
+@1m to @2's corpse, @3 remaining=
+@1m to @2's corpse, died @3 ago=
+Death Compass=
+The Death Compass will point toward your corpse until you find it.=
+The Death Compass' guidance will only last for @1 after death.=
+This does nothing in its current inert state. If you have this in your inventory when you die, however, it will follow you into your next life's inventory and point toward the location of your previous life's end.=
