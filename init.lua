@@ -309,6 +309,14 @@ end)
 -- Called when a player dies
 -- `reason`: a PlayerHPChangeReason table, see register_on_player_hpchange
 
+-- Using the regular minetest.register_on_dieplayer causes the new callback to be inserted *after*
+-- the on_dieplayer used by the bones mod, which means the bones mod clears the player inventory before
+-- we get to this and we can't tell if there was a death compass in it.
+-- We must therefore rearrange the callback table to move this mod's callback to the front
+-- to ensure it always goes first.
+local death_compass_dieplayer_callback = table.remove(minetest.registered_on_dieplayers)
+table.insert(minetest.registered_on_dieplayers, 1, death_compass_dieplayer_callback)
+
 minetest.register_on_respawnplayer(function(player)
 	local player_name = player:get_player_name()
 	local compasses = player_death_location[player_name]
