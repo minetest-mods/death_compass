@@ -1,0 +1,30 @@
+# textdomain: death_compass
+
+
+### init.lua ###
+
+# String used for concatenating the "days, hours, minutes" strings together into a duration description.
+, =, 
+1 day=1 день
+1 hour=1 час
+1 minute=1 минута
+1 second=1 секунда
+# string used when there's just two elements of the "hours and minutes" duration description
+@1 and @2=@1 и @2
+@1 days=@1 дней
+@1 hours=@1 часов
+@1 minutes=@1 минут
+@1 seconds=@1 секунд
+# @1 is a numeric distance in meters, @2 is the name of a player, @3 is a duration
+@1m to @2's corpse, @3 remaining=@1 м до костей @2, @3 осталось
+# @1 is a numeric distance in meters, @2 is the name of a player, @3 is a duration
+@1m to @2's corpse, died @3 ago=@1 м до костей @2, умер @3 назад
+Death Compass=Компас смерти
+
+The Death Compass will point toward your corpse until you find it.=Компас смерти будет указывать на кости до тех пор пока вы их не найдете.
+
+# @1 is a duration
+The Death Compass' guidance will only last for @1 after death.=Руководство по компасу смерти будет действовать @1 после смерти
+
+This does nothing in its current inert state. If you have this in your inventory when you die, however, it will follow you into your next life's inventory and point toward the location of your previous life's end.=Он ничего не делает в текущем состоянии. Если вы имели его в своем инвенторе во время смерти, то он будет в вашем инвенторе после вашего возрождения и будет указывать вам на ваше место смерти.
+
